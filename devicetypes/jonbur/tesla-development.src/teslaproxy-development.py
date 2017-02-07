@@ -7,7 +7,6 @@ from config import *
 
 TeslaConnection = ""
 
-
 def establish_connection():
 	global TeslaConnection
 	if isinstance(TeslaConnection, teslajson.Connection):
@@ -37,6 +36,15 @@ def get_lockstatus(c, car):
 
 def get_isclimateon(c, car):
 	return get_climate(c, car)['is_climate_on']
+
+def get_insidetemp(c, car):
+	return get_climate(c, car)['inside_temp']
+
+def get_drivertemp(c, car):
+	return get_climate(c, car)['driver_temp_setting']
+	
+def get_passtemp(c, car):
+	return get_climate(c, car)['passenger_temp_setting']
 
 def get_iscarlocked(c,car):
 	return get_lockstatus(c, car)['locked']
@@ -146,6 +154,27 @@ def isclimateon():
 	data['isclimateon'] = str(get_isclimateon(c, VEHICLE_VIN))
 	return json.dumps(data)
 
+@app.route('/api/insidetemp')
+def insidetemp():
+	c = establish_connection()
+	data = {}
+	data['insidetemp'] = str(get_insidetemp(c, VEHICLE_VIN))
+	return json.dumps(data)
+
+@app.route('/api/drivertemp')
+def drivertemp():
+	c = establish_connection()
+	data = {}
+	data['drivertemp'] = str(get_drivertemp(c, VEHICLE_VIN))
+	return json.dumps(data)
+
+@app.route('/api/passtemp')
+def passtemp():
+	c = establish_connection()
+	data = {}
+	data['passtemp'] = str(get_passtemp(c, VEHICLE_VIN))
+	return json.dumps(data)
+
 @app.route('/api/starthvac')
 def starthvac():
 	c = establish_connection()
@@ -238,15 +267,24 @@ def refresh():
 	c = establish_connection()
 	
 	chargestatus = get_chargestatus(c, VEHICLE_VIN)
+	climatestatus = get_climate(c, VEHICLE_VIN)
 	
 	data = {}
 	data['iscarlocked'] = str(get_iscarlocked(c, VEHICLE_VIN))
-	data['isclimateon'] = str(get_isclimateon(c, VEHICLE_VIN))
 	data['isvehiclehome'] = str(get_isvehiclehome(c, VEHICLE_VIN))
+	data['isclimateon'] = str(climatestatus['is_climate_on'])
+	data['insidetemp'] = str(climatestatus['inside_temp'])
+	data['drivertemp'] = str(climatestatus['driver_temp_setting'])
+	data['passtemp'] = str(climatestatus['passenger_temp_setting'])
 	data['iscarcharging'] = str(chargestatus['charging_state'])
 	data['getbatterylevel'] = str(chargestatus['battery_level'])
 	data['getbatteryrange'] = str(chargestatus['ideal_battery_range'])
 	data['gettimetocharge'] = str(chargestatus['time_to_full_charge'])
 	
+	
 	return json.dumps(data)
+	
+app.run(host="0.0.0.0", threaded=True)
+
+
 
