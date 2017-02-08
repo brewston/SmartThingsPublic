@@ -22,17 +22,25 @@ def get_climate(c, car):
 	climate = None
 	for v in c.vehicles:
 		if v["vin"] == car:
-			d = v.data_request("climate_state")
-			climate = d
+			climate = v.data_request("climate_state")
 	return climate
 
 def get_lockstatus(c, car):
 	lockstatus = None
 	for v in c.vehicles:
 		if v["vin"] == car:
-			d = v.data_request("vehicle_state")
-			lockstatus = d
+			lockstatus = v.data_request("vehicle_state")
 	return lockstatus
+	
+def get_guipreferences(c, car):
+	guipreferences = None
+	for v in c.vehicles:
+		if v["vin"] == car:
+			guipreferences = v.data_request("gui_settings")
+	return guipreferences
+	
+def get_guirangedisplay(c, car):
+	return get_guipreferences(c, car)['gui_range_display']
 
 def get_isclimateon(c, car):
 	return get_climate(c, car)['is_climate_on']
@@ -105,7 +113,10 @@ def get_batterylevel(c,car):
 	return get_chargestatus(c, car)['battery_level']
 
 def get_batteryrange(c,car):
-	return get_chargestatus(c, car)['ideal_battery_range']
+	if (get_guirangedisplay(c, car) == "Ideal"):
+		return get_chargestatus(c, car)['ideal_battery_range']
+	else:
+		return get_chargestatus(c, car)['est_battery_range']
 
 def get_timetocharge(c,car):
 	return get_chargestatus(c, car)['time_to_full_charge']
@@ -146,6 +157,11 @@ def isvehiclehome():
 def getclimate():
 	c = establish_connection()
 	return str(get_climate(c, VEHICLE_VIN))
+	
+@app.route('/api/getrangedisplay')
+def getrangedisplay():
+	c = establish_connection()
+	return str(get_guirangedisplay(c, VEHICLE_VIN))
 
 @app.route('/api/isclimateon')
 def isclimateon():
@@ -281,6 +297,10 @@ def refresh():
 	data['getbatteryrange'] = str(chargestatus['ideal_battery_range'])
 	data['gettimetocharge'] = str(chargestatus['time_to_full_charge'])
 	
+	if (get_guirangedisplay(c, VEHICLE_VIN) == "Ideal"):
+		data['getbatteryrange'] = str(chargestatus['ideal_battery_range'])
+	else:
+		data['getbatteryrange'] = str(chargestatus['est_battery_range'])
 	
 	return json.dumps(data)
 	
